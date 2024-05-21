@@ -101,19 +101,21 @@ if 'station_df' in st.session_state:
         with tab_lists:
             df = property_search()
 
+            # チェックボックス付きデータフレームの表示
+            selected_indices = []
+            for i, row in df.iterrows():
+                col1, col2 = st.columns([1, 9])
+                with col1:
+                    selected = st.checkbox(f"{i+1}", key=f"cb_{i}")
+                    if selected:
+                        selected_indices.append(i)
+                with col2:
+                    st.write(row["property_name"], row["rental_fee"], row["floor"], row["layout"], row["size"], row["building_age"], row["distance_station"], row["address"])
+        with tab_map:
+            map = folium.Map(location=[35.5378631,139.5951104], zoom_start=10)
+            st_folium(map, width = 1000, height = 500)
 
-        # チェックボックス付きデータフレームの表示
-        selected_indices = []
-        for i, row in df.iterrows():
-            col1, col2 = st.columns([1, 9])
-            with col1:
-                selected = st.checkbox(f"{i+1}", key=f"cb_{i}")
-                if selected:
-                    selected_indices.append(i)
-            with col2:
-                st.write(row["property_name"], row["rental_fee"], row["floor"], row["layout"], row["size"], row["building_age"], row["distance_station"], row["address"])
-
-        # 選択された行の表示
+         # 選択された行の表示
         if selected_indices:
             st.write("選択された物件:")
             selected_rows = df.iloc[selected_indices]
