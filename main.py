@@ -1,6 +1,7 @@
 # サブモジュールをインポートする
 from station_search import station_serch
 from introduction_to_Station import introduction_to_Station
+from property_search import property_search
 
 import streamlit as st
 import pandas as pd
@@ -12,6 +13,21 @@ import folium
 
 # ページの設定：広いレイアウトを使用
 st.set_page_config(layout="wide")
+
+# カスタムCSSの定義
+st.markdown(
+    """
+    <style>
+    .custom-text {
+        color: black;
+        font-size: 24px;
+        font-weight: bold;
+        background-color: lightgray;
+    }
+    </style>
+    """, 
+    unsafe_allow_html=True
+)
 
 
 # サイドバー設定
@@ -40,7 +56,7 @@ with st.sidebar:
 
 
 if 'station_df' in st.session_state:
-    st.write("### 候補駅一覧:")  # タイトル行
+    st.markdown('<div class="custom-text">候補駅一覧</div>', unsafe_allow_html=True)
     # ページネーションを設定
     page_size = 10
     total_pages = (len(st.session_state.station_df) + page_size - 1) // page_size
@@ -75,14 +91,32 @@ if 'station_df' in st.session_state:
             st.session_state.selected_station = row['station_name']
     
     if 'selected_station' in st.session_state:
-        st.write("### 選択した駅の紹介:") 
+        st.markdown(f'<div class="custom-text">{st.session_state.selected_station} 駅の紹介</div>', unsafe_allow_html=True)
         introduction_text = introduction_to_Station()
         st.write(introduction_text)
 
-        st.write("### この駅の物件情報:") 
-        tab_map, tab_lists = st.tabs(["地図で表示", "一覧で表示"])
-        with tab_map:
-            map = folium.Map(location=[35.5378631,139.5951104], zoom_start=10)
-            st_folium(map, width = 1000, height = 500)
-        with lists:
-            st.write("aaa")
+        st.markdown(f'<div class="custom-text">{st.session_state.selected_station} 駅の物件情報</div>', unsafe_allow_html=True)
+        tab_lists,tab_map = st.tabs(["一覧で表示","地図で表示",])
+
+        with tab_lists:
+            df = property_search()
+
+
+        # チェックボックス付きデータフレームの表示
+        selected_indices = []
+        for i, row in df.iterrows():
+            col1, col2 = st.columns([1, 9])
+            with col1:
+                selected = st.checkbox(f"{i+1}", key=f"cb_{i}")
+                if selected:
+                    selected_indices.append(i)
+            with col2:
+                st.write(row["property_name"], row["rental_fee"], row["floor"], row["layout"], row["size"], row["building_age"], row["distance_station"], row["address"])
+
+        # 選択された行の表示
+        if selected_indices:
+            st.write("選択された物件:")
+            selected_rows = df.iloc[selected_indices]
+            st.dataframe(selected_rows)
+        else:
+            st.write("選択された物件はありません。")
